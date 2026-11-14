@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ABC Divertido</title>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #fff6d6;
+    --bg2: #ffe0ec;
+    --text: #3b2a5a;
+    --card: #ffffff;
+    --shadow: 0 8px 0 rgba(59, 42, 90, 0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Baloo 2', 'Comic Sans MS', system-ui, sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    background: linear-gradient(160deg, var(--bg1), var(--bg2));
+    overflow-x: hidden;
+  }
+
+  /* Nuvens decorativas */
+  .cloud {
+    position: fixed; background: #fff; border-radius: 100px; opacity: .7; z-index: 0;
+    animation: float 40s linear infinite;
+  }
+  .cloud::before, .cloud::after { content: ""; position: absolute; background: #fff; border-radius: 50%; }
+  .cloud.c1 { width: 120px; height: 40px; top: 8%; left: -150px; }
+  .cloud.c1::before { width: 60px; height: 60px; top: -30px; left: 15px; }
+  .cloud.c1::after { width: 45px; height: 45px; top: -20px; left: 60px; }
+  .cloud.c2 { width: 160px; height: 50px; top: 60%; left: -200px; animation-duration: 55s; animation-delay: -20s; }
+  .cloud.c2::before { width: 80px; height: 80px; top: -40px; left: 20px; }
+  .cloud.c2::after { width: 60px; height: 60px; top: -28px; left: 80px; }
+  @keyframes float { to { transform: translateX(calc(100vw + 300px)); } }
+
+  /* Tela de boas-vindas */
+  #welcome {
+    position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+    padding: 16px; z-index: 10; background: rgba(255, 246, 214, 0.6); backdrop-filter: blur(3px);
+  }
+  .welcome-box {
+    background: var(--card); border-radius: 32px; padding: 32px 28px; text-align: center;
+    max-width: 360px; width: 100%; box-shadow: var(--shadow); border: 4px solid #ffd23f;
+    animation: pop .5s cubic-bezier(.3,1.6,.6,1);
+  }
+  .welcome-box .mascot { font-size: 72px; display: block; animation: wiggle 2s ease-in-out infinite; }
+  .welcome-box h1 { font-size: 34px; line-height: 1.1; margin: 8px 0; color: #ff5d8f; }
+  .welcome-box p { font-size: 19px; margin-bottom: 20px; }
+  .btn {
+    font-family: inherit; font-weight: 800; font-size: 24px; border: none; cursor: pointer;
+    background: #4cc9f0; color: #fff; padding: 12px 32px; border-radius: 999px;
+    box-shadow: 0 6px 0 #2a9bc0; transition: transform .1s, box-shadow .1s;
+  }
+  .btn:active { transform: translateY(5px); box-shadow: 0 1px 0 #2a9bc0; }
+
+  /* Cabeçalho */
+  header { text-align: center; padding: 24px 16px 8px; position: relative; z-index: 1; }
+  header h2 { font-size: clamp(30px, 6vw, 48px); color: #ff5d8f; text-shadow: 3px 3px 0 #fff; }
+  header p { font-size: 20px; }
+
+  /* Grade de letras */
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 14px; max-width: 900px; margin: 16px auto 40px; padding: 0 16px; position: relative; z-index: 1;
+  }
+  .letter {
+    font-family: inherit; font-size: 46px; font-weight: 800; color: #fff; border: none; cursor: pointer;
+    aspect-ratio: 1; border-radius: 24px; box-shadow: var(--shadow);
+    transition: transform .15s; text-shadow: 2px 2px 0 rgba(0,0,0,.15);
+  }
+  .letter:hover { transform: scale(1.08) rotate(-3deg); }
+  .letter:active { transform: scale(.92); }
+
+  /* Janelas (cartão da letra e escrever) */
+  .overlay {
+    position: fixed; inset: 0; display: none; align-items: center; justify-content: center;
+    background: rgba(59, 42, 90, .45); padding: 16px; z-index: 20;
+  }
+  .overlay.open { display: flex; }
+  .card {
+    background: var(--card); border-radius: 36px; padding: 24px 20px; text-align: center;
+    width: 100%; max-width: 380px; box-shadow: var(--shadow); position: relative;
+    animation: pop .45s cubic-bezier(.3,1.6,.6,1);
+  }
+  .card .big { font-size: 110px; font-weight: 800; line-height: 1; }
+  .card .big small { font-size: 60px; opacity: .7; margin-left: 6px; }
+  .card .emoji { font-size: 110px; display: block; margin: 6px 0; animation: bounce 1.2s ease-in-out infinite; cursor: pointer; }
+  .card .word { font-size: 38px; font-weight: 800; }
+  .card .word b { text-decoration: underline wavy; }
+  .actions { display: flex; gap: 10px; justify-content: center; margin-top: 16px; flex-wrap: wrap; }
+  .btn.small { font-size: 20px; padding: 10px 20px; }
+  .btn.pink { background: #ff5d8f; box-shadow: 0 6px 0 #d13f6e; }
+  .btn.green { background: #52c46b; box-shadow: 0 6px 0 #379a4e; }
+  .btn.orange { background: #fb8500; box-shadow: 0 6px 0 #c46800; }
+  .write-btn { width: 100%; margin-top: 12px; }
+  .close {
+    position: absolute; top: 12px; right: 14px; background: #eee; border: none; border-radius: 50%;
+    width: 40px; height: 40px; font-size: 22px; cursor: pointer; color: var(--text); z-index: 2;
+  }
+
+  /* Escrever a letra */
+  #trace { z-index: 25; }
+  .trace-title { font-size: 26px; font-weight: 800; }
+  .trace-title span { font-size: 34px; }
+  .trace-tip { font-size: 17px; opacity: .8; min-height: 26px; }
+  #traceSvg {
+    width: min(78vw, 320px); height: min(78vw, 320px); margin: 6px auto 0; display: block;
+    background: #fffdf5; border-radius: 28px; border: 4px dashed #ffd23f;
+    touch-action: none; user-select: none; -webkit-user-select: none; cursor: crosshair;
+  }
+  .trace-msg { font-size: 26px; font-weight: 800; color: #52c46b; min-height: 38px; }
+
+  /* Confete */
+  .confetti {
+    position: fixed; top: -20px; font-size: 26px; z-index: 40; pointer-events: none;
+    animation: fall 1.6s ease-in forwards;
+  }
+  @keyframes fall { to { transform: translateY(105vh) rotate(540deg); opacity: .8; } }
+
+  footer { text-align: center; padding: 0 16px 24px; font-size: 15px; opacity: .7; position: relative; z-index: 1; }
+
+  @keyframes pop { from { transform: scale(.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes bounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+  @keyframes wiggle { 0%,100% { transform: rotate(-8deg); } 50% { transform: rotate(8deg); } }
+  .pulse { animation: pulse .4s; }
+  @keyframes pulse { 50% { transform: scale(1.15); } }
+</style>
+</head>
+<body>
+
+<div class="cloud c1"></div>
+<div class="cloud c2"></div>
+
+<!-- Boas-vindas -->
+<div id="welcome">
+  <div class="welcome-box">
+    <span class="mascot">🦉</span>
+    <h1>Olá, amiguinho!</h1>
+    <p>Vamos aprender o ABC juntos? Toque numa letra para ouvir o som dela e aprender a escrever!</p>
+    <button class="btn" id="start">Vamos lá! 🎉</button>
+  </div>
+</div>
+
+<header>
+  <h2>ABC Divertido</h2>
+  <p>Escolha uma letrinha 👇</p>
+</header>
+
+<main class="grid" id="grid"></main>
+
+<footer>Toque na figura para ouvir de novo 🔊</footer>
+
+<!-- Cartão da letra -->
+<div class="overlay" id="modal">
+  <div class="card" id="card">
+    <button class="close" id="close" aria-label="Fechar">✕</button>
+    <div class="big" id="big"></div>
+    <span class="emoji" id="emoji"></span>
+    <div class="word" id="word"></div>
+    <div class="actions">
+      <button class="btn small pink" id="prev" aria-label="Letra anterior">⬅</button>
+      <button class="btn small green" id="again">🔊 Ouvir</button>
+      <button class="btn small pink" id="next" aria-label="Próxima letra">➡</button>
+    </div>
+    <button class="btn orange write-btn" id="writeBtn">✍️ Escrever a letra</button>
+  </div>
+</div>
+
+<!-- Escrever a letra com o dedo -->
+<div class="overlay" id="trace">
+  <div class="card">
+    <button class="close" id="traceClose" aria-label="Fechar">✕</button>
+    <div class="trace-title">Escreva a letra <span id="traceLetter"></span></div>
+    <div class="trace-tip" id="traceTip">Siga a estrelinha com o dedo ⭐</div>
+    <svg id="traceSvg" viewBox="-5 -5 110 110">
+      <g id="gTracks"></g>
+      <g id="gGuides"></g>
+      <g id="gInk"></g>
+      <g id="gDone"></g>
+      <g id="gHint"></g>
+    </svg>
+    <div class="trace-msg" id="traceMsg"></div>
+    <div class="actions">
+      <button class="btn small pink" id="traceClear">🔄 Apagar</button>
+      <button class="btn small green" id="traceNext">Próxima ➡</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // letra, nome falado da letra, palavra, emoji
+  const letters = [
+    ["A","á","Abelha","🐝"], ["B","bê","Baleia","🐋"], ["C","cê","Cachorro","🐶"],
+    ["D","dê","Dado","🎲"], ["E","é","Elefante","🐘"], ["F","éfe","Foca","🦭"],
+    ["G","gê","Gato","🐱"], ["H","agá","Hipopótamo","🦛"], ["I","i","Ilha","🏝️"],
+    ["J","jóta","Jacaré","🐊"], ["K","cá","Kiwi","🥝"], ["L","éle","Leão","🦁"],
+    ["M","ême","Macaco","🐒"], ["N","êne","Navio","🚢"], ["O","ó","Ovelha","🐑"],
+    ["P","pê","Pato","🦆"], ["Q","quê","Queijo","🧀"], ["R","érre","Rato","🐭"],
+    ["S","ésse","Sapo","🐸"], ["T","tê","Tartaruga","🐢"], ["U","u","Uva","🍇"],
+    ["V","vê","Vaca","🐮"], ["W","dáblio","Waffle","🧇"], ["X","xis","Xícara","☕"],
+    ["Y","ípsilon","Iô-iô","🪀"], ["Z","zê","Zebra","🦓"]
+  ];
+  // O "Y" mostra a palavra "Yoyô" na tela, mas fala "iô-iô" para soar certo
+  const shownWord = { "Y": "Yoyô" };
+
+  // Traços de cada letra (num quadrado de 100x100), na ordem em que se escreve
+  const O_PATH = "M50 10 C30 10 18 28 18 50 C18 72 30 90 50 90 C70 90 82 72 82 50 C82 28 70 10 50 10";
+  const strokes = {
+    A: ["M50 10 L20 90", "M50 10 L80 90", "M32 60 L68 60"],
+    B: ["M25 10 L25 90", "M25 10 L52 10 C66 10 74 18 74 30 C74 42 66 50 52 50 L25 50",
+        "M25 50 L56 50 C71 50 79 59 79 70 C79 81 71 90 56 90 L25 90"],
+    C: ["M80 25 C72 12 62 10 50 10 C28 10 18 30 18 50 C18 70 28 90 50 90 C62 90 72 88 80 75"],
+    D: ["M25 10 L25 90", "M25 10 L45 10 C70 10 80 28 80 50 C80 72 70 90 45 90 L25 90"],
+    E: ["M25 10 L25 90", "M25 10 L75 10", "M25 50 L65 50", "M25 90 L75 90"],
+    F: ["M25 10 L25 90", "M25 10 L75 10", "M25 50 L65 50"],
+    G: ["M80 25 C72 12 62 10 50 10 C28 10 18 30 18 50 C18 70 28 90 50 90 C70 90 80 78 80 58",
+        "M80 58 L55 58"],
+    H: ["M25 10 L25 90", "M75 10 L75 90", "M25 50 L75 50"],
+    I: ["M50 10 L50 90"],
+    J: ["M65 10 L65 65 C65 82 56 90 43 90 C31 90 22 82 20 70"],
+    K: ["M28 10 L28 90", "M75 10 L28 56", "M42 44 L77 90"],
+    L: ["M28 10 L28 90 L75 90"],
+    M: ["M20 90 L20 10 L50 60 L80 10 L80 90"],
+    N: ["M25 90 L25 10 L75 90 L75 10"],
+    O: [O_PATH],
+    P: ["M25 10 L25 90", "M25 10 L54 10 C68 10 76 19 76 32 C76 45 68 54 54 54 L25 54"],
+    Q: [O_PATH, "M60 70 L84 92"],
+    R: ["M25 10 L25 90", "M25 10 L54 10 C68 10 76 19 76 32 C76 45 68 54 54 54 L25 54", "M48 54 L78 90"],
+    S: ["M77 22 C70 12 60 10 50 10 C34 10 24 18 24 30 C24 42 36 46 50 50 C64 54 77 58 77 70 C77 82 66 90 50 90 C38 90 28 86 22 77"],
+    T: ["M20 10 L80 10", "M50 10 L50 90"],
+    U: ["M22 10 L22 60 C22 80 34 90 50 90 C66 90 78 80 78 60 L78 10"],
+    V: ["M20 10 L50 90 L80 10"],
+    W: ["M12 10 L30 90 L50 30 L70 90 L88 10"],
+    X: ["M22 10 L78 90", "M78 10 L22 90"],
+    Y: ["M20 10 L50 50", "M80 10 L50 50", "M50 50 L50 90"],
+    Z: ["M22 10 L78 10 L22 90 L78 90"]
+  };
+
+  const colors = ["#ff5d8f","#ffb703","#4cc9f0","#52c46b","#9b5de5","#f15bb5","#fb8500","#00bbf9"];
+
+  const grid = document.getElementById("grid");
+  const modal = document.getElementById("modal");
+  const trace = document.getElementById("trace");
+  let current = 0;
+
+  // Monta os botões das letras
+  letters.forEach(([L], i) => {
+    const b = document.createElement("button");
+    b.className = "letter";
+    b.textContent = L;
+    b.style.background = colors[i % colors.length];
+    b.setAttribute("aria-label", "Letra " + L);
+    b.onclick = () => openLetter(i);
+    grid.appendChild(b);
+  });
+
+  // ===== Voz em português =====
+  let voice = null;
+  // Nomes de vozes femininas em português (Windows, Android, iPhone, Mac, Chrome)
+  const femaleNames = ["francisca", "thalita", "maria", "luciana", "vitoria", "vitória",
+    "leila", "fernanda", "camila", "joana", "catarina", "female", "feminina",
+    "google português do brasil"];
+  const maleNames = ["daniel", "antonio", "antônio", "felipe", "ricardo", "male", "masculina"];
+  function pickVoice() {
+    const vs = speechSynthesis.getVoices().filter(v => v.lang.replace("_", "-").startsWith("pt"));
+    const br = vs.filter(v => v.lang.replace("_", "-") === "pt-BR");
+    const pool = br.length ? br : vs;
+    const isFemale = v => femaleNames.some(n => v.name.toLowerCase().includes(n));
+    const isMale = v => maleNames.some(n => v.name.toLowerCase().includes(n));
+    voice = pool.find(isFemale) || pool.find(v => !isMale(v)) || pool[0] || null;
+  }
+  if ("speechSynthesis" in window) {
+    pickVoice();
+    speechSynthesis.onvoiceschanged = pickVoice;
+  }
+
+  function speak(text) {
+    if (!("speechSynthesis" in window)) return;
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = "pt-BR";
+    if (voice) u.voice = voice;
+    u.rate = 0.9;   // devagar, mas animada
+    u.pitch = 1.6;  // voz mais aguda e alegre (máx. 2)
+    speechSynthesis.speak(u);
+  }
+
+  // Som de "plim" quando termina um traço
+  let audioCtx = null;
+  function ding(freq = 880) {
+    try {
+      audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = "sine"; o.frequency.value = freq;
+      g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.35);
+      o.connect(g).connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + 0.35);
+    } catch (e) {}
+  }
+
+  // ===== Cartão da letra =====
+  function sayCurrent() {
+    const [L, name, word] = letters[current];
+    speak(`${name}! ${name}, de ${word}!`);
+  }
+
+  function openLetter(i) {
+    current = (i + letters.length) % letters.length;
+    const [L, , word, emoji] = letters[current];
+    const display = shownWord[L] || word;
+    const color = colors[current % colors.length];
+    document.getElementById("big").innerHTML = `${L}<small>${L.toLowerCase()}</small>`;
+    document.getElementById("big").style.color = color;
+    document.getElementById("emoji").textContent = emoji;
+    document.getElementById("word").innerHTML = `<b style="color:${color}">${display[0]}</b>${display.slice(1)}`;
+    document.getElementById("card").style.border = `5px solid ${color}`;
+    modal.classList.add("open");
+    const card = document.getElementById("card");
+    card.style.animation = "none"; card.offsetHeight; card.style.animation = "";
+    sayCurrent();
+  }
+
+  function closeLetter() { modal.classList.remove("open"); speechSynthesis.cancel(); }
+
+  // ===== Escrever a letra com o dedo =====
+  const SVGNS = "http://www.w3.org/2000/svg";
+  const svg = document.getElementById("traceSvg");
+  const gTracks = document.getElementById("gTracks");
+  const gGuides = document.getElementById("gGuides");
+  const gInk = document.getElementById("gInk");
+  const gDone = document.getElementById("gDone");
+  const gHint = document.getElementById("gHint");
+  const TOLERANCE = 9;    // quão perto do caminho o dedo precisa passar
+  const NEEDED = 0.85;    // % do traço que precisa ser coberto
+
+  let tr = null;          // estado do desenho atual
+  let drawing = false, inkLine = null, inkPoints = [], lastPt = null;
+
+  function el(tag, attrs, parent) {
+    const e = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  function openTrace() {
+    modal.classList.remove("open");
+    trace.classList.add("open");
+    buildTrace();
+    const [L, name] = letters[current];
+    speak(`Agora vamos escrever a letra ${name}! Siga a estrelinha.`);
+  }
+
+  function buildTrace() {
+    const [L] = letters[current];
+    const color = colors[current % colors.length];
+    document.getElementById("traceLetter").textContent = L;
+    document.getElementById("traceLetter").style.color = color;
+    document.getElementById("traceMsg").textContent = "";
+    document.getElementById("traceTip").textContent = "Siga a estrelinha com o dedo ⭐";
+    [gTracks, gGuides, gInk, gDone, gHint].forEach(g => g.innerHTML = "");
+
+    tr = { color, finished: false, list: [] };
+    strokes[L].forEach(d => {
+      el("path", { d, fill: "none", stroke: "#ece6f7", "stroke-width": 16,
+        "stroke-linecap": "round", "stroke-linejoin": "round" }, gTracks);
+      const guide = el("path", { d, fill: "none", stroke: "#b8acd9", "stroke-width": 1.6,
+        "stroke-dasharray": "3 4", "stroke-linecap": "round" }, gGuides);
+      // pontos ao longo do traço, para saber quanto a criança já cobriu
+      const len = guide.getTotalLength();
+      const samples = [];
+      for (let t = 0; t <= len; t += 1.5) {
+        const p = guide.getPointAtLength(t);
+        samples.push({ x: p.x, y: p.y, hit: false });
+      }
+      tr.list.push({ d, len, samples, done: false });
+    });
+    showHint();
+  }
+
+  // Mostra o ponto de início e a estrelinha andando pelo próximo traço
+  function showHint() {
+    gHint.innerHTML = "";
+    const idx = tr.list.findIndex(s => !s.done);
+    if (idx < 0) return;
+    const s = tr.list[idx];
+    const start = s.samples[0];
+    el("circle", { cx: start.x, cy: start.y, r: 6, fill: "#52c46b", stroke: "#fff", "stroke-width": 1.5 }, gHint);
+    const num = el("text", { x: start.x, y: start.y + 0.5, "text-anchor": "middle",
+      "dominant-baseline": "central", "font-size": 7, "font-weight": 800, fill: "#fff",
+      "font-family": "Baloo 2, sans-serif" }, gHint);
+    num.textContent = idx + 1;
+    const star = el("text", { "text-anchor": "middle", "dominant-baseline": "central", "font-size": 11 }, gHint);
+    star.textContent = "⭐";
+    el("animateMotion", { path: s.d, dur: Math.max(1.2, s.len / 45) + "s",
+      repeatCount: "indefinite" }, star);
+  }
+
+  function toSvg(e) {
+    const p = svg.createSVGPoint();
+    p.x = e.clientX; p.y = e.clientY;
+    return p.matrixTransform(svg.getScreenCTM().inverse());
+  }
+
+  function distToSeg(p, a, b) {
+    const dx = b.x - a.x, dy = b.y - a.y;
+    const l2 = dx * dx + dy * dy;
+    let t = l2 ? ((p.x - a.x) * dx + (p.y - a.y) * dy) / l2 : 0;
+    t = Math.max(0, Math.min(1, t));
+    return Math.hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy));
+  }
+
+  function addPoint(pt) {
+    inkPoints.push(`${pt.x.toFixed(1)},${pt.y.toFixed(1)}`);
+    inkLine.setAttribute("points", inkPoints.join(" "));
+    const a = lastPt || pt;
+    let changed = false;
+    tr.list.forEach(s => {
+      if (s.done) return;
+      s.samples.forEach(q => {
+        if (!q.hit && distToSeg(q, a, pt) < TOLERANCE) q.hit = true;
+      });
+      const covered = s.samples.filter(q => q.hit).length / s.samples.length;
+      if (covered >= NEEDED) {
+        s.done = true; changed = true;
+        el("path", { d: s.d, fill: "none", stroke: tr.color, "stroke-width": 12,
+          "stroke-linecap": "round", "stroke-linejoin": "round" }, gDone);
+      }
+    });
+    lastPt = pt;
+    if (changed) {
+      if (tr.list.every(s => s.done)) finishTrace();
+      else { ding(); showHint(); }
+    }
+  }
+
+  function finishTrace() {
+    tr.finished = true;
+    drawing = false;
+    gHint.innerHTML = "";
+    gInk.innerHTML = "";
+    ding(1046);
+    const [L, name] = letters[current];
+    document.getElementById("traceMsg").textContent = "Muito bem! 🎉";
+    document.getElementById("traceTip").textContent = "Você escreveu a letra " + L + "!";
+    speak(`Muito bem! Você escreveu a letra ${name}!`);
+    confetti();
+  }
+
+  function confetti() {
+    const bits = ["🎉", "⭐", "🎈", "✨", "🌟"];
+    for (let i = 0; i < 18; i++) {
+      const c = document.createElement("span");
+      c.className = "confetti";
+      c.textContent = bits[i % bits.length];
+      c.style.left = Math.random() * 100 + "vw";
+      c.style.animationDelay = Math.random() * 0.4 + "s";
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 2200);
+    }
+  }
+
+  svg.addEventListener("pointerdown", e => {
+    if (!tr || tr.finished) return;
+    e.preventDefault();
+    drawing = true;
+    svg.setPointerCapture(e.pointerId);
+    inkPoints = []; lastPt = null;
+    inkLine = el("polyline", { fill: "none", stroke: tr.color, "stroke-opacity": 0.55,
+      "stroke-width": 9, "stroke-linecap": "round", "stroke-linejoin": "round" }, gInk);
+    addPoint(toSvg(e));
+  });
+  svg.addEventListener("pointermove", e => {
+    if (!drawing) return;
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+    (evs.length ? evs : [e]).forEach(ev => { if (drawing) addPoint(toSvg(ev)); });
+  });
+  ["pointerup", "pointercancel", "pointerleave"].forEach(t =>
+    svg.addEventListener(t, () => { drawing = false; lastPt = null; }));
+
+  function closeTrace() { trace.classList.remove("open"); drawing = false; speechSynthesis.cancel(); }
+
+  // ===== Botões =====
+  document.getElementById("start").onclick = () => {
+    document.getElementById("welcome").style.display = "none";
+    speak("Olá! Vamos aprender o abecedário!");
+  };
+  document.getElementById("close").onclick = closeLetter;
+  modal.onclick = e => { if (e.target === modal) closeLetter(); };
+  document.getElementById("again").onclick = sayCurrent;
+  document.getElementById("emoji").onclick = e => {
+    e.target.classList.remove("pulse"); void e.target.offsetWidth; e.target.classList.add("pulse");
+    sayCurrent();
+  };
+  document.getElementById("next").onclick = () => openLetter(current + 1);
+  document.getElementById("prev").onclick = () => openLetter(current - 1);
+  document.getElementById("writeBtn").onclick = openTrace;
+
+  document.getElementById("traceClose").onclick = closeTrace;
+  trace.onclick = e => { if (e.target === trace) closeTrace(); };
+  document.getElementById("traceClear").onclick = buildTrace;
+  document.getElementById("traceNext").onclick = () => {
+    current = (current + 1) % letters.length;
+    buildTrace();
+    speak(`Agora a letra ${letters[current][1]}!`);
+  };
+
+  // Teclado: digitar a letra abre o cartão
+  document.addEventListener("keydown", e => {
+    if (trace.classList.contains("open")) { if (e.key === "Escape") closeTrace(); return; }
+    if (e.key === "Escape") return closeLetter();
+    if (modal.classList.contains("open") && e.key === "ArrowRight") return openLetter(current + 1);
+    if (modal.classList.contains("open") && e.key === "ArrowLeft") return openLetter(current - 1);
+    const i = letters.findIndex(([L]) => L === e.key.toUpperCase());
+    if (i >= 0 && document.getElementById("welcome").style.display === "none") openLetter(i);
+  });
+</script>
+</body>
+</html>
